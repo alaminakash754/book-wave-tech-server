@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 
@@ -29,16 +29,59 @@ async function run() {
     // await client.connect();
 
     const bookCollection = client.db('bookDB').collection('book');
+    const userBookCollection = client.db('bookDB').collection('userBook');
     const userCollection = client.db('bookDB').collection('user');
 
-    app.get('/book', async(req, res) => {
-        const cursor = bookCollection.find();
-        const result = await cursor.toArray();
-        res.send(result);
+    // user added book related apis 
+    app.post('/userBook', async (req, res) => {
+      const newBook = req.body;
+      console.log(newBook);
+      const result = await userBookCollection.insertOne(newBook);
+      res.send(result);
+    })
+
+    app.get('/userBook', async (req, res) => {
+      const cursor = userBookCollection.find()
+      const result = await cursor.toArray();
+      res.send(result);
+    })
+
+    app.get('/userBook/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await userBookCollection.findOne(query);
+      res.send(result);
+    })
+
+    app.put('/userBook/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updatedBook = req.body;
+      const book = {
+        $set: {
+          select: updatedBook.select,
+          image: updatedBook.image,
+          name: updatedBook.name,
+          quantity: updatedBook.quantity,
+          author: updatedBook.author,
+          description: updatedBook.description,
+          rating: updatedBook.rating
+        }
+      }
+      const result = await userBookCollection.updateOne(filter, book, options);
+      res.send(result);
+    })
+
+    // book apis 
+    app.get('/book', async (req, res) => {
+      const cursor = bookCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
     })
 
     // user related apis 
-    app.post('/user', async(req, res) => {
+    app.post('/user', async (req, res) => {
       const user = req.body;
       console.log(user);
       const result = await userCollection.insertOne(user);
@@ -58,10 +101,10 @@ run().catch(console.dir);
 
 
 
-app.get('/',(req, res) => {
-    res.send('Book wave Tech server is running')
+app.get('/', (req, res) => {
+  res.send('Book wave Tech server is running')
 });
 
 app.listen(port, () => {
-    console.log(`Book wave Tech server is running on port: ${port}`)
+  console.log(`Book wave Tech server is running on port: ${port}`)
 })
