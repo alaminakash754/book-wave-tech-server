@@ -29,6 +29,7 @@ async function run() {
     // await client.connect();
 
     const bookCollection = client.db('bookDB').collection('book');
+    const userCollection = client.db('bookDB').collection('user');
 
     app.get('/book', async(req, res) => {
         const cursor = bookCollection.find();
@@ -36,7 +37,13 @@ async function run() {
         res.send(result);
     })
 
-
+    // user related apis 
+    app.post('/user', async(req, res) => {
+      const user = req.body;
+      console.log(user);
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+    })
 
 
     // Send a ping to confirm a successful connection
