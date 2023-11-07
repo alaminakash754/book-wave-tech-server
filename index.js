@@ -31,6 +31,7 @@ async function run() {
     const bookCollection = client.db('bookDB').collection('book');
     const userBookCollection = client.db('bookDB').collection('userBook');
     const userCollection = client.db('bookDB').collection('user');
+    const borrowCollection = client.db('bookDB').collection('borrows');
 
     // user added book related apis 
     app.post('/userBook', async (req, res) => {
@@ -73,6 +74,33 @@ async function run() {
       res.send(result);
     })
 
+
+    // borrow books apis 
+    app.post('/borrows', async(req, res) => {
+      const borrow = req.body;
+      console.log(borrow);
+      const result = await borrowCollection.insertOne(borrow);
+      res.send(result);
+    })
+
+
+    app.get('/borrows', async(req, res) => {
+      let query = {};
+      if(req.query?.email){
+        query = { email: req.query.email}
+      }
+      const result = await borrowCollection.find(query).toArray();
+      res.send(result);
+    })
+
+    app.delete('/borrows/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id) };
+      const result = await borrowCollection.deleteOne(query);
+      res.send(result);
+    })
+
+
     // book apis 
     app.get('/book', async (req, res) => {
       const cursor = bookCollection.find();
@@ -83,6 +111,21 @@ async function run() {
     app.get('/book/:id', async(req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
+      const result = await bookCollection.findOne(query);
+      res.send(result);
+    })
+
+    app.get('/eachBook/:id', async(req, res) => {
+      const id = req.params.id;
+      const query ={_id: new ObjectId(id)}
+      const result = await bookCollection.findOne(query);
+      res.send(result);
+    })
+
+
+    app.get('/fullDetails/:id', async(req, res) => {
+      const id = req.params.id;
+      const query ={_id: new ObjectId(id)}
       const result = await bookCollection.findOne(query);
       res.send(result);
     })
@@ -111,6 +154,7 @@ run().catch(console.dir);
 app.get('/', (req, res) => {
   res.send('Book wave Tech server is running')
 });
+
 
 app.listen(port, () => {
   console.log(`Book wave Tech server is running on port: ${port}`)
